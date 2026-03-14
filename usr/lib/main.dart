@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,117 +8,293 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Kruti Dev Converter',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepOrange),
+        useMaterial3: true,
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const MyHomePage(title: 'Flutter Demo Home Page'),
+        '/': (context) => const ConverterScreen(),
       },
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+class ConverterScreen extends StatefulWidget {
+  const ConverterScreen({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<ConverterScreen> createState() => _ConverterScreenState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
+class _ConverterScreenState extends State<ConverterScreen> {
+  final TextEditingController _unicodeController = TextEditingController();
+  final TextEditingController _krutiController = TextEditingController();
 
-  void _incrementCounter() {
+  void _convertToKruti() {
     setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
+      _krutiController.text =
+          KrutiDevConverter.unicodeToKrutiDev(_unicodeController.text);
+    });
+  }
+
+  void _convertToUnicode() {
+    setState(() {
+      _unicodeController.text =
+          KrutiDevConverter.krutiDevToUnicode(_krutiController.text);
+    });
+  }
+
+  void _copyToClipboard(String text) {
+    if (text.isEmpty) return;
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Copied to clipboard!'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _clearAll() {
+    setState(() {
+      _unicodeController.clear();
+      _krutiController.clear();
     });
   }
 
   @override
+  void dispose() {
+    _unicodeController.dispose();
+    _krutiController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // TRY THIS: Try changing the color here to a specific color (to
-        // Colors.amber, perhaps?) and trigger a hot reload to see the AppBar
-        // change color while the other colors stay the same.
+        title: const Text('Hindi Font Converter'),
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.clear_all),
+            tooltip: 'Clear All',
+            onPressed: _clearAll,
+          ),
+        ],
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          //
-          // TRY THIS: Invoke "debug painting" (choose the "Toggle Debug Paint"
-          // action in the IDE, or press "p" in the console), to see the
-          // wireframe for each widget.
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            const Text('You have pushed the button this many times:'),
-            Text('$_counter', style: Theme.of(context).textTheme.headlineMedium),
+          children: [
+            // Unicode Input Section
+            Expanded(
+              child: Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Unicode Hindi (Standard)',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 20),
+                            onPressed: () =>
+                                _copyToClipboard(_unicodeController.text),
+                            tooltip: 'Copy Unicode',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _unicodeController,
+                          maxLines: null,
+                          expands: true,
+                          decoration: const InputDecoration(
+                            hintText: 'Type or paste standard Hindi here (e.g., नमस्ते)...',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            
+            // Conversion Buttons
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: _convertToKruti,
+                    icon: const Icon(Icons.arrow_downward),
+                    label: const Text('To Kruti Dev'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                  ElevatedButton.icon(
+                    onPressed: _convertToUnicode,
+                    icon: const Icon(Icons.arrow_upward),
+                    label: const Text('To Unicode'),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Kruti Dev Input Section
+            Expanded(
+              child: Card(
+                elevation: 2,
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Kruti Dev 010',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.copy, size: 20),
+                            onPressed: () =>
+                                _copyToClipboard(_krutiController.text),
+                            tooltip: 'Copy Kruti Dev',
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _krutiController,
+                          maxLines: null,
+                          expands: true,
+                          decoration: const InputDecoration(
+                            hintText: 'Type or paste Kruti Dev text here (e.g., ueLrs)...',
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+}
+
+/// Utility class to handle conversion between Unicode Hindi and Kruti Dev 010.
+class KrutiDevConverter {
+  // Mapping from Unicode to Kruti Dev
+  static final Map<String, String> _unicodeToKrutiMap = {
+    "त्र": "«", "श्र": "J", "क्ष": "={", "ज्ञ": "K",
+    "र्": "Z", // Ref (half ra)
+    "ऑ": "v‚", "ॉ": "‚",
+    "आ": "vk", "इ": "b", "ई": "bZ", "उ": "m", "ऊ": "Å", "ए": "ए", "ऐ": "ऐ", "ओ": "vks", "औ": "vkS", "अ": "v",
+    "क": "d", "ख": "[k", "ग": "x", "घ": "?k", "ङ": "³",
+    "च": "p", "छ": "N", "ज": "t", "झ": ">", "ञ": "¥",
+    "ट": "V", "ठ": "B", "ड": "M", "ढ": "<", "ण": ".k",
+    "त": "r", "थ": "Fk", "द": "n", "ध": "èk", "न": "u",
+    "प": "i", "फ": "Q", "ब": "c", "भ": "Hk", "म": "e",
+    "य": ";", "र": "j", "ल": "y", "व": "o", "श": "”k", "ष": "’k", "स": "l", "ह": "g",
+    "ो": "ks", "ौ": "kS", "ं": "a", "ँ": "¡", "ः": "%",
+    "ा": "k", "ी": "h", "ु": "q", "ू": "w", "ृ": "`", "े": "s", "ै": "S", "्": "~",
+    "०": "å", "१": "ƒ", "२": "„", "३": "…", "४": "†", "५": "‡", "६": "ˆ", "७": "‰", "८": "Š", "९": "‹",
+    "।": "A", ",": "]",
+  };
+
+  // Mapping from Kruti Dev to Unicode
+  static final Map<String, String> _krutiToUnicodeMap = {
+    "«": "त्र", "J": "श्र", "={": "क्ष", "K": "ज्ञ",
+    "Z": "र्",
+    "v‚": "ऑ", "‚": "ॉ",
+    "vk": "आ", "bZ": "ई", "b": "इ", "m": "उ", "Å": "ऊ", "vks": "ओ", "vkS": "औ", "v": "अ",
+    "[k": "ख", "d": "क", "x": "ग", "?k": "घ", "³": "ङ",
+    "p": "च", "N": "छ", "t": "ज", ">": "झ", "¥": "ञ",
+    "V": "ट", "B": "ठ", "M": "ड", "<": "ढ", ".k": "ण",
+    "r": "त", "Fk": "थ", "n": "द", "èk": "ध", "u": "न",
+    "i": "प", "Q": "फ", "c": "ब", "Hk": "भ", "e": "म",
+    ";": "य", "j": "र", "y": "ल", "o": "व", "”k": "श", "’k": "ष", "l": "स", "g": "ह",
+    "ks": "ो", "kS": "ौ", "a": "ं", "¡": "ँ", "%": "ः",
+    "k": "ा", "h": "ी", "q": "ु", "w": "ू", "`": "ृ", "s": "े", "S": "ै", "~": "्",
+    "å": "०", "ƒ": "१", "„": "२", "…": "३", "†": "४", "‡": "५", "ˆ": "६", "‰": "७", "Š": "८", "‹": "९",
+    "A": "।", "]": ",",
+  };
+
+  /// Converts standard Unicode Hindi text to Kruti Dev 010 encoding.
+  static String unicodeToKrutiDev(String unicodeText) {
+    if (unicodeText.isEmpty) return "";
+    String text = unicodeText;
+
+    // 1. Shift chhoti ee (ि) to the left of the consonant
+    // In Unicode, 'ि' comes after the consonant. In Kruti Dev, it comes before.
+    text = text.replaceAllMapped(RegExp(r'([क-ह])ि'), (match) => 'f${match.group(1)}');
+    text = text.replaceAll('ि', 'f'); // Catch any remaining
+
+    // 2. Replace using map (longest keys first to prevent partial replacements)
+    List<String> sortedKeys = _unicodeToKrutiMap.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+      
+    for (String key in sortedKeys) {
+      text = text.replaceAll(key, _unicodeToKrutiMap[key]!);
+    }
+
+    return text;
+  }
+
+  /// Converts Kruti Dev 010 encoded text back to standard Unicode Hindi.
+  static String krutiDevToUnicode(String krutiText) {
+    if (krutiText.isEmpty) return "";
+    String text = krutiText;
+
+    // 1. Replace using map (longest keys first)
+    List<String> sortedKeys = _krutiToUnicodeMap.keys.toList()
+      ..sort((a, b) => b.length.compareTo(a.length));
+      
+    for (String key in sortedKeys) {
+      text = text.replaceAll(key, _krutiToUnicodeMap[key]!);
+    }
+
+    // 2. Shift chhoti ee (f) to the right of the consonant as 'ि'
+    text = text.replaceAllMapped(RegExp(r'f([क-ह])'), (match) => '${match.group(1)}ि');
+    text = text.replaceAll('f', 'ि'); // Catch any remaining
+
+    return text;
   }
 }
